@@ -1,0 +1,124 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pro Finance Manager</title>
+  <style>
+    body { font-family: Arial; margin:0; background:#0f172a; color:#fff; }
+    .container { max-width:1000px; margin:auto; padding:20px; }
+    h1 { text-align:center; }
+    .card { background:#1e293b; padding:15px; border-radius:10px; margin-bottom:15px; }
+    input, select, button { padding:10px; margin:5px 0; width:100%; border:none; border-radius:6px; }
+    button { background:#22c55e; color:#fff; cursor:pointer; }
+    table { width:100%; border-collapse: collapse; margin-top:10px; }
+    th, td { padding:10px; border-bottom:1px solid #334155; text-align:left; }
+    .income { color:#22c55e; }
+    .expense { color:#ef4444; }
+    .bar { background:#334155; border-radius:10px; overflow:hidden; height:20px; }
+    .progress { height:100%; background:#22c55e; width:0%; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>💰 Pro Finance Manager</h1>  <div class="card">
+    <h2>Saldo: Rp <span id="balance">0</span></h2>
+    <h3>Total Pemasukan: Rp <span id="totalIncome">0</span></h3>
+    <h3>Total Pengeluaran: Rp <span id="totalExpense">0</span></h3>
+    <h3>Goal: Rp <span id="goalDisplay">0</span></h3>
+    <div class="bar"><div id="progressBar" class="progress"></div></div>
+  </div>  <div class="card">
+    <h3>Set Goal & Anggaran</h3>
+    <input type="number" id="goal" placeholder="Target uang">
+    <input type="number" id="budget" placeholder="Anggaran pengeluaran">
+    <button onclick="setGoal()">Simpan</button>
+  </div>  <div class="card">
+    <h3>Tambah Transaksi</h3>
+    <input type="text" id="desc" placeholder="Deskripsi">
+    <input type="number" id="amount" placeholder="Jumlah">
+    <select id="type">
+      <option value="income">Pemasukan</option>
+      <option value="expense">Pengeluaran</option>
+    </select>
+    <button onclick="addTransaction()">Tambah</button>
+  </div>  <div class="card">
+    <h3>Riwayat Transaksi</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Deskripsi</th>
+          <th>Jumlah</th>
+          <th>Tipe</th>
+        </tr>
+      </thead>
+      <tbody id="history"></tbody>
+    </table>
+  </div>
+</div><script>
+let data = JSON.parse(localStorage.getItem('financeData')) || [];
+let goal = localStorage.getItem('goal') || 0;
+let budget = localStorage.getItem('budget') || 0;
+
+function save() {
+  localStorage.setItem('financeData', JSON.stringify(data));
+}
+
+function setGoal() {
+  goal = document.getElementById('goal').value;
+  budget = document.getElementById('budget').value;
+  localStorage.setItem('goal', goal);
+  localStorage.setItem('budget', budget);
+  render();
+}
+
+function addTransaction() {
+  let desc = document.getElementById('desc').value;
+  let amount = parseInt(document.getElementById('amount').value);
+  let type = document.getElementById('type').value;
+
+  if(!desc || !amount) return alert('Isi semua data');
+
+  data.push({ desc, amount, type });
+  save();
+  render();
+
+  document.getElementById('desc').value = '';
+  document.getElementById('amount').value = '';
+}
+
+function render() {
+  let balance = 0;
+  let totalIncome = 0;
+  let totalExpense = 0;
+  let history = document.getElementById('history');
+  history.innerHTML = '';
+
+  data.forEach(item => {
+    if(item.type === 'income') {
+      balance += item.amount;
+      totalIncome += item.amount;
+    } else {
+      balance -= item.amount;
+      totalExpense += item.amount;
+    }
+
+    let row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${item.desc}</td>
+      <td class="${item.type}">Rp ${item.amount}</td>
+      <td>${item.type}</td>
+    `;
+    history.appendChild(row);
+  });
+
+  document.getElementById('balance').innerText = balance.toLocaleString();
+  document.getElementById('totalIncome').innerText = totalIncome.toLocaleString();
+  document.getElementById('totalExpense').innerText = totalExpense.toLocaleString();
+  document.getElementById('goalDisplay').innerText = goal;
+
+  let progress = goal > 0 ? (balance / goal) * 100 : 0;
+  document.getElementById('progressBar').style.width = Math.min(progress,100) + '%';
+}
+
+render();
+</script></body>
+</html>
